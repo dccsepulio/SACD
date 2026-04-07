@@ -1,0 +1,56 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-sacd}
+      POSTGRES_USER: ${POSTGRES_USER:-sacd}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sacd}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sacd} -d ${POSTGRES_DB:-sacd}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sacd_net
+
+  backend:
+    build:
+      context: ./backend
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://sacd:sacd@db:5432/sacd}
+      RESULTS_DIR: ${RESULTS_DIR:-/data/results}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+    volumes:
+      - backend_results:/data/results
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    networks:
+      - sacd_net
+
+  frontend:
+    build:
+      context: ./frontend
+    env_file:
+      - .env
+    environment:
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000}
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
+    networks:
+      - sacd_net
+
+volumes:
+  db_data:
+  backend_results:
+
+networks:
+  sacd_net:

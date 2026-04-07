@@ -1,0 +1,16 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+psycopg[binary]
+pydantic
+pydantic-settings
+alembic
+python-multipart
+pytest
+pytest-asyncio
+httpx
+geoalchemy2
+xarray
+numpy
+pandas
+netCDF4
